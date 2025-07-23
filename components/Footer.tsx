@@ -9,10 +9,10 @@ export default function Footer() {
   }
 
   const socialLinks = [
-    { icon: Github, href: "https://github.com", label: "GitHub" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-    { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-    { icon: Mail, href: "mailto:glenn@example.com", label: "Email" },
+    { icon: Github, href: "https://github.com/G4EVA-dev", label: "GitHub" },
+    { icon: Linkedin, href: "https://www.linkedin.com/in/tanze-glenn/", label: "LinkedIn" },
+    { icon: Twitter, href: "https://x.com/GlennTanze", label: "Twitter" },
+    { icon: Mail, href: "mailto:tanzeglenn@gmail.com", label: "Email" },
   ]
 
   const quickLinks = [

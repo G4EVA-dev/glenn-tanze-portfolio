@@ -4,29 +4,105 @@ import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger"
-import { ChevronDown, Github, Linkedin, Mail, Twitter } from "lucide-react"
+import { Github, Linkedin, Mail, Twitter, ChevronDown } from "lucide-react"
 import { useInView } from "react-intersection-observer"
+import Particles from "react-tsparticles"
+import { loadFull } from "tsparticles"
 import TypingAnimation from "./TypingAnimation"
 
+// Add Google Fonts
+const Orbitron = "Orbitron, sans-serif"
+const Syne = "Syne, sans-serif"
+
+// Particle configuration
+const particlesOptions = {
+  background: {
+    color: {
+      value: "#0a0a23",
+    },
+  },
+  fpsLimit: 60,
+  interactivity: {
+    events: {
+      onClick: {
+        enable: true,
+        mode: "push",
+      },
+      onHover: {
+        enable: true,
+        mode: "repulse",
+      },
+      resize: true,
+    },
+    modes: {
+      push: {
+        quantity: 4,
+      },
+      repulse: {
+        distance: 200,
+        duration: 0.4,
+      },
+    },
+  },
+  particles: {
+    color: {
+      value: "#ffffff",
+    },
+    links: {
+      color: "#8899ff",
+      distance: 150,
+      enable: true,
+      opacity: 0.5,
+      width: 1,
+    },
+    move: {
+      direction: "none" as const,
+      enable: true,
+      outModes: {
+        default: "out" as const,
+      },
+      random: false,
+      speed: 2,
+      straight: false,
+    },
+    number: {
+      density: {
+        enable: true,
+        area: 800,
+      },
+      value: 80,
+    },
+    opacity: {
+      value: 0.5,
+    },
+    shape: {
+      type: "circle",
+    },
+    size: {
+      value: { min: 1, max: 5 },
+    },
+  },
+  detectRetina: true,
+}
+
 export default function Hero() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const titleRef = useRef<HTMLDivElement>(null)
-  const subtitleRef = useRef<HTMLDivElement>(null)
-  const socialLinksRef = useRef<HTMLDivElement>(null)
-  const imageRef = useRef<HTMLDivElement>(null)
-  const { ref: typingRef, inView } = useInView({
-    triggerOnce: true,
+  const [ref, inView] = useInView({
     threshold: 0.1,
   })
 
-  // GSAP Animations
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const socialLinksRef = useRef<HTMLDivElement>(null)
+  const particlesRef = useRef<HTMLDivElement>(null)
+  const imageRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    if (!titleRef.current || !socialLinksRef.current || !imageRef.current) return
+    // GSAP Animations
+    if (!titleRef.current || !socialLinksRef.current) return
 
     gsap.registerPlugin(ScrollTrigger)
 
     // Title animation
-    gsap.from(titleRef.current, {
+    const titleAnimation = gsap.from(titleRef.current, {
       y: 100,
       opacity: 0,
       duration: 1,
@@ -41,7 +117,7 @@ export default function Hero() {
     })
 
     // Social links animation
-    gsap.from(socialLinksRef.current, {
+    const socialLinksAnimation = gsap.from(socialLinksRef.current, {
       scale: 0.8,
       opacity: 0,
       duration: 0.5,
@@ -56,171 +132,33 @@ export default function Hero() {
       },
     })
 
-    // Image animation
-    gsap.from(imageRef.current, {
-      scale: 0.8,
-      opacity: 0,
-      duration: 0.8,
-      delay: 0.6,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: imageRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        scrub: true,
-        markers: false,
-      },
-    })
-
-    // Typing animation visibility
-    if (inView) {
-      gsap.to(typingRef, {
-        opacity: 1,
-        y: 0,
-        duration: 1,
-        ease: "power3.out",
-      })
-    }
-
-    // Image glow animation
-    const glow = imageRef.current?.querySelector(".glow")
-    if (glow) {
-      gsap.to(glow, {
-        scale: 1.1,
-        duration: 2,
-        repeat: -1,
-        yoyo: true,
-        ease: "power2.inOut",
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-
-    const particles: Array<{
-      x: number
-      y: number
-      vx: number
-      vy: number
-      size: number
-      opacity: number
-    }> = []
-
-    // Create particles
-    for (let i = 0; i < 50; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.5 + 0.2,
-      })
-    }
-
-    function animate() {
-      if (!ctx || !canvas) return
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      particles.forEach((particle) => {
-        particle.x += particle.vx
-        particle.y += particle.vy
-
-        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1
-        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1
-
-        ctx.beginPath()
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(59, 130, 246, ${particle.opacity})`
-        ctx.fill()
-      })
-      requestAnimationFrame(animate)
-    }
-    animate()
-
+    // Handle resize
     const handleResize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      const canvas = particlesRef.current?.querySelector("canvas")
+      if (canvas) {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+      }
     }
 
     window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
 
-  // GSAP Animations
-  useEffect(() => {
-    if (!titleRef.current || !socialLinksRef.current || !imageRef.current) return
-
-    gsap.registerPlugin(ScrollTrigger)
-
-    // Title animation
-    gsap.from(titleRef.current, {
-      y: 100,
-      opacity: 0,
-      duration: 1,
-      ease: "power4.out",
-      scrollTrigger: {
-        trigger: titleRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        scrub: true,
-        markers: false,
-      },
-    })
-
-    // Social links animation
-    gsap.from(socialLinksRef.current, {
-      scale: 0.8,
-      opacity: 0,
-      duration: 0.5,
-      delay: 0.4,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: socialLinksRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        scrub: true,
-        markers: false,
-      },
-    })
-
-    // Image animation
-    gsap.from(imageRef.current, {
-      scale: 0.8,
-      opacity: 0,
-      duration: 0.8,
-      delay: 0.6,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: imageRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        scrub: true,
-        markers: false,
-      },
-    })
-
-    // Image glow animation
-    const glow = imageRef.current?.querySelector(".glow")
-    if (glow) {
-      gsap.to(glow, {
-        scale: 1.1,
-        duration: 2,
-        repeat: -1,
-        yoyo: true,
-        ease: "power2.inOut",
-      })
+    return () => {
+      // Cleanup animations
+      if (titleAnimation) titleAnimation.kill()
+      if (socialLinksAnimation) socialLinksAnimation.kill()
+      window.removeEventListener("resize", handleResize)
     }
-  }, [])
+  }, [inView])
+
+  // Particle initialization functions
+  const particlesInit = async (engine: any) => {
+    await loadFull(engine)
+  }
+
+  const particlesLoaded = async (container: any) => {
+    console.log("Particles container loaded")
+  }
 
   const socialLinks = [
     { icon: Github, href: "https://github.com/G4EVA-dev", label: "GitHub" },
@@ -231,25 +169,29 @@ export default function Hero() {
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background particles */}
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none opacity-30" />
+      {/* Space-themed background */}
+      <div className="absolute inset-0 bg-[#0a0a23] overflow-hidden">
+        <Particles
+          id="tsparticles"
+          options={particlesOptions}
+          init={particlesInit}
+          loaded={particlesLoaded}
+        />
+      </div>
 
       {/* Main content */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-start px-4 sm:px-6 lg:px-12 max-w-6xl mx-auto gap-28 pt-32 pb-16">
-        {/* Left Section - Text */}
-        <div className="lg:w-1/2 text-center lg:text-left lg:pr-16">
-          <div ref={titleRef} className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6">
-            <span>Hi👋🏾 I'm{''} </span>
-            <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-             Efuetlancha Glenn
+      <div className="relative z-10 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-12 max-w-6xl mx-auto gap-24 pt-32 pb-24">
+        {/* Content */}
+        <div className="text-center">
+          <div ref={titleRef} className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 font-[Orbitron] text-white">
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+              Efuetlancha Glenn
             </span>
           </div>
-          <div ref={typingRef} className="text-lg sm:text-xl mb-8">
-            <div className="typing-text opacity-0 translate-y-4">
-              {/* <p><TypingAnimation text="👋🏾 Hi, I'm Glenn Tanze — Full Stack Developer | Problem Solver | Builder of Scalable Web and Mobile Solutions" /></p> */}
-            </div>
+          <div className="text-xl sm:text-2xl mb-8 font-[Syne] text-gray-300">
+            <TypingAnimation text="Full Stack Developer | Problem Solver | Builder of Scalable Web and Mobile Solutions" />
           </div>
-          <div ref={socialLinksRef} className="flex justify-center lg:justify-start gap-8 mt-10">
+          <div ref={socialLinksRef} className="flex justify-center gap-8 mt-10">
             {socialLinks.map((link) => (
               <a
                 key={link.label}
@@ -258,12 +200,24 @@ export default function Hero() {
                 rel="noopener noreferrer"
                 className="group"
               >
-                <div className="relative">
-                  <link.icon className="w-6 h-6 transition-transform group-hover:scale-125" />
-                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black text-white px-3 py-1 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                <motion.div
+                  className="relative"
+                  whileHover={{ scale: 1.2 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 17 }}
+                >
+                  <div className="p-2 bg-gray-800/50 rounded-full transition-all duration-300 group-hover:bg-gray-700/50">
+                    <link.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <motion.span
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-3 py-1 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    whileHover={{ y: -5, opacity: 1 }}
+                  >
                     {link.label}
-                  </span>
-                </div>
+                  </motion.span>
+                </motion.div>
               </a>
             ))}
           </div>
@@ -291,7 +245,13 @@ export default function Hero() {
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
       >
-        <ChevronDown className="w-10 h-10 text-gray-400 dark:text-gray-500 hover:text-gray-300 transition-colors" />
+        <motion.div
+          className="text-white"
+          whileHover={{ scale: 1.2 }}
+          transition={{ type: "spring", stiffness: 300, damping: 17 }}
+        >
+          <ChevronDown className="w-10 h-10" />
+        </motion.div>
       </motion.div>
     </section>
   )
